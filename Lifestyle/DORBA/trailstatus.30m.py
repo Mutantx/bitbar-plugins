@@ -17,20 +17,23 @@ except ImportError:
     import json
 from math import radians, cos, sin, asin, sqrt # For Proximity haversine
 
-def callDorba():
+
+def call_dorba():
     conn = importedhttpclient.HTTPSConnection("www.dorba.org", timeout=15)
     conn.request("GET", "/services/trails.php?")
     res = conn.getresponse()
-    res_dict = json.loads(res.read())
+    res_dorba_dict = json.loads(res.read())
     conn.close()
-    return res_dict
+    return res_dorba_dict
 
-def callFreeGeoIp():
+
+def call_free_geo_ip():
     conn = importedhttpclient.HTTPSConnection('freegeoip.app', timeout=15)
     conn.request("GET", "/json/")
     res_latlong_dict = json.loads(conn.getresponse().read())
     conn.close()
     return res_latlong_dict
+
 
 # haversine Reference: https://stackoverflow.com/a/4913653
 def haversine(lon1, lat1, lon2, lat2):
@@ -46,20 +49,20 @@ def haversine(lon1, lat1, lon2, lat2):
     dlat = lat2 - lat1
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
     c = 2 * asin(sqrt(a))
-    r =  3956 # Radius of earth in kilometers. Use 6371 for kilometers
+    r = 3956 # Radius of earth in kilometers. Use 6371 for kilometers
     return c * r
+
 
 def get_my_lat_long():
     try:
-        my_ip_longitude = LONGTITUDE
-        my_ip_latitude = LATITUDE
+        LONGTITUDE
+        LATITUDE
         print("Manually provided Long/Lat used")
         return float(LONGTITUDE), float(LATITUDE)
     except NameError:
         print("3rd Party provided Lat/Long given your IP")
-        res_latlong_dict = callFreeGeoIp()
+        res_latlong_dict = call_free_geo_ip()
         return float(res_latlong_dict.get("longitude")), float(res_latlong_dict.get("latitude"))
-
 
 
 def sort_by_my_lat_long(dict, my_long, my_lat):
@@ -70,7 +73,8 @@ def sort_by_my_lat_long(dict, my_long, my_lat):
     dict["trails"] = sorted(dict["trails"], key=lambda k: k.get("trail").get("distance_from_me"))
     return dict
 
-def printTrails(dict):
+
+def print_trails(dict):
 
     for i, x in enumerate(res_dict.get("trails")):
         emoji = ""
@@ -99,35 +103,36 @@ def printTrails(dict):
         if ORDER == "PROXIMITY":
             print("--IP: Distance to trail:{} miles".format(x.get('trail').get("distance_from_me")))
 
+
 if __name__ == '__main__':
 
-    ## UPDATE SORTING PREFERENCES BELOW:
-        #### Sorting Preferences
+    # UPDATE SORTING PREFERENCES BELOW:
+    # *Sorting Preferences*
 
-        # Options:
-        # 1: "ALPHABETICAL"     (DEFAULT) Revert back here if you encounter any issues with Proximity
-        # 2: "PROXIMITY"        Free 3rd Party Service used, if LAT/LONG not manually provided, from your IP addr
+    # Options:
+    # 1: "ALPHABETICAL"     (DEFAULT) Revert back here if you encounter any issues with Proximity
+    # 2: "PROXIMITY"        Free 3rd Party Service used, if LAT/LONG not manually provided, from your IP addr
 
     ORDER = "ALPHABETICAL"
 
-        ## Manually Provide Latitude and Longitude
-        # Manually providing LAT/LONG removes call to 3rd Party Service freegeoip.app.  In some networks this service
-        # may not be reachable.  Provide LAT/LONG manually below.
-        # Instructions: Remove # in front of both longtitude & latitude.  Provide as number (without quotes)
-        # Sample:
-        # LONGTITUDE = -95.31161037358372
-        # LATITUDE = 32.322424524120876
-        ##
+    # *Manually Provide Latitude and Longitude*
+    # Providing LAT/LONG manually removes call to 3rd Party Service freegeoip.app.  In some networks this service
+    # may not be reachable.  Provide LAT/LONG manually below.
+    #
+    # Instructions: Remove # in front of both LONGTITUDE & LATITUDE.  Provide as number (without quotes).
+    #               Acquiring LONGTITUDE LATITUDE can be as easy as right clicking on https://maps.google.com.
+    #               Right Click on map(https://maps.google.com) > "What's here" feature provides it as well
+    #               DFW Airport sample LONGTITUDE, LATITUDE provided below
 
-    # LONGTITUDE =
-    # LATITUDE =
+    # LONGTITUDE = -97.04028155837426
+    # LATITUDE = 32.899809080939946
 
-    ## UPDATE SORTING PREFERENCES ABOVE^
+    # UPDATE SORTING PREFERENCES ABOVE^
 
     print("DORBA")
     print("---")
 
-    res_dict = callDorba()
+    res_dict = call_dorba()
 
     if ORDER == "PROXIMITY":
         print("Proximity ENABLED")
@@ -136,4 +141,4 @@ if __name__ == '__main__':
         print("---")
         res_dict = sort_by_my_lat_long(res_dict, my_ip_longitude, my_ip_latitude)
 
-    printTrails(res_dict)
+    print_trails(res_dict)
